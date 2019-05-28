@@ -1,0 +1,14 @@
+{
+  "name": "thsbase64file",
+  "version": "1.0.0",
+  "description": "base64图片保存文件到本地",
+  "cordova": {
+    "id": "thsbase64file",
+    "platforms": []
+  },
+  "keywords": [
+    "ecosystem:cordova"
+  ],
+  "author": "liuyx",
+  "license": "ISC"
+}
