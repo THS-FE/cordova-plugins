@@ -1,7 +1,7 @@
 var exec = require('cordova/exec');
 
 module.exports = {
-    showApns: function (successCallback, errorCallback) {
+    saveBase64ToFile: function (successCallback, errorCallback) {
         cordova.exec(
             successCallback,
             errorCallback,
