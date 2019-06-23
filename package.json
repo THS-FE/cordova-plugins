@@ -1,0 +1,25 @@
+{
+  "name": "cn.com.ths.exportdoc",
+  "version": "0.0.1",
+  "description": "",
+  "cordova": {
+    "id": "cn.com.ths.exportdoc",
+    "platforms": [
+      "android"
+    ]
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/THS-FE/thsExportDoc.git"
+  },
+  "keywords": [
+    "ecosystem:cordova",
+    "cordova-android"
+  ],
+  "author": "liuyx",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/THS-FE/thsExportDoc/issues"
+  },
+  "homepage": "https://github.com/THS-FE/thsExportDoc#readme"
+}
