@@ -1,0 +1,12 @@
+//ext.postBuildExtras会在最后执行，覆盖Android模块的gradle配置
+ext.postBuildExtras = {
+  android {
+    defaultConfig {
+      multiDexEnabled true
+    }
+    compileOptions {
+      sourceCompatibility JavaVersion.VERSION_1_8
+      targetCompatibility JavaVersion.VERSION_1_8
+    }
+  }
+}

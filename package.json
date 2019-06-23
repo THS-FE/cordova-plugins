@@ -1,25 +1,50 @@
 {
-  "name": "cn.com.ths.exportdoc",
-  "version": "0.0.1",
-  "description": "",
+  "_from": "git+https://github.com/THS-FE/thsExportDoc.git",
+  "_id": "cn.com.ths.exportdoc@0.0.1",
+  "_inBundle": false,
+  "_integrity": "",
+  "_location": "/cn.com.ths.exportdoc",
+  "_phantomChildren": {},
+  "_requested": {
+    "type": "git",
+    "raw": "https://github.com/THS-FE/thsExportDoc.git",
+    "rawSpec": "https://github.com/THS-FE/thsExportDoc.git",
+    "saveSpec": "git+https://github.com/THS-FE/thsExportDoc.git",
+    "fetchSpec": "https://github.com/THS-FE/thsExportDoc.git",
+    "gitCommittish": null
+  },
+  "_requiredBy": [
+    "#USER",
+    "/"
+  ],
+  "_resolved": "git+https://github.com/THS-FE/thsExportDoc.git#19751fede58db3b4ee2566eb81b0767790a63bfc",
+  "_spec": "https://github.com/THS-FE/thsExportDoc.git",
+  "_where": "D:\\workproject\\ionic4\\exportDocTest",
+  "author": {
+    "name": "liuyx"
+  },
+  "bugs": {
+    "url": "https://github.com/THS-FE/thsExportDoc/issues"
+  },
+  "bundleDependencies": false,
   "cordova": {
     "id": "cn.com.ths.exportdoc",
     "platforms": [
       "android"
     ]
   },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/THS-FE/thsExportDoc.git"
-  },
+  "deprecated": false,
+  "description": "",
+  "homepage": "https://github.com/THS-FE/thsExportDoc#readme",
   "keywords": [
     "ecosystem:cordova",
     "cordova-android"
   ],
-  "author": "liuyx",
   "license": "ISC",
-  "bugs": {
-    "url": "https://github.com/THS-FE/thsExportDoc/issues"
+  "name": "cn.com.ths.exportdoc",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/THS-FE/thsExportDoc.git"
   },
-  "homepage": "https://github.com/THS-FE/thsExportDoc#readme"
+  "version": "0.0.1"
 }
