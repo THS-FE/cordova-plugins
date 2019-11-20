@@ -11,6 +11,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -22,13 +23,13 @@ import cn.com.ths.exportdoc.thsexportdoc.service.DocumentPage;
 import cn.com.ths.exportdoc.thsexportdoc.service.RepDocTemplate;
 
 public class ExportWordUtils {
-   private static ExportWordUtils exportWordUtils;
-   public  static ExportWordUtils getInstance(){
-       if(exportWordUtils==null){
-           exportWordUtils = new ExportWordUtils();
-       }
-       return exportWordUtils;
-   }
+    private static ExportWordUtils exportWordUtils;
+    public  static ExportWordUtils getInstance(){
+        if(exportWordUtils==null){
+            exportWordUtils = new ExportWordUtils();
+        }
+        return exportWordUtils;
+    }
     /**
      * 导出word
      * @param json 遵循规范格式传入，{"filename":"生成的文件名称","templatepath":"模版名称",
@@ -105,7 +106,12 @@ public class ExportWordUtils {
                     DocDynamicTable dynaicTable = new DocDynamicTable();
                     DocDynamicTable.InnerDocTable docTable = dynaicTable.getDocTable();
                     //设置动态数据的开始行，参数为数组，值为数据行的首行序号（从1开始），如果标题行存在折行，则数组值为多个
-                    docTable.setDataRowStarts(new int[]{2,4});
+                    List<BigInteger> datanums = ((List) tabledata.get("startDataNums"));
+                    int[] nums = new int[datanums.size()];
+                    for (int i = 0;i<datanums.size();i++){
+                        nums[i] = datanums.get(i).intValue();
+                    }
+                    docTable.setDataRowStarts(nums);
                     for (Map<String,Object> tdata:datas) {
                         docTable.addRow(tdata);
                     }
@@ -131,6 +137,8 @@ public class ExportWordUtils {
     public String cpTemplate(String templateName, Context ctx) {
         String path = getSDPath()+"/"+ctx.getPackageName()+"/" + templateName;
         File f = new File(path);
+        //新增删除目录操作，防止修改模板不更新
+        deleteDirectory(f.getParent());
         if (!f.exists()) {
             File pathDir=new File(f.getParent());
             if(!pathDir.exists()){
@@ -139,7 +147,7 @@ public class ExportWordUtils {
             try {
                 f.createNewFile();
                 FileOutputStream out = new FileOutputStream(path);
-                InputStream in = ctx.getAssets().open(templateName);
+                InputStream in = ctx.getAssets().open("www/assets/template/"+templateName);
                 byte[] buffer = new byte[1024];
                 int readBytes = 0;
                 while ((readBytes = in.read(buffer)) != -1)
@@ -162,4 +170,65 @@ public class ExportWordUtils {
         }
         return sdDir.toString();
     }
+    /**
+     * 删除目录
+     */
+    public  boolean deleteDirectory(String dir) {
+        // 如果dir不以文件分隔符结尾，自动添加文件分隔符
+        if (!dir.endsWith(File.separator))
+            dir = dir + File.separator;
+        File dirFile = new File(dir);
+        // 如果dir对应的文件不存在，或者不是一个目录，则退出
+        if ((!dirFile.exists()) || (!dirFile.isDirectory())) {
+            System.out.println("删除目录失败：" + dir + "不存在！");
+            return false;
+        }
+        // 用于标识是否删除成功
+        boolean flag = true;
+        // 删除文件夹中的所有文件包括子目录
+        File[] files = dirFile.listFiles();
+        for (int i = 0; i < files.length; i++) {
+            // 删除子文件
+            if (files[i].isFile()) {
+                flag = delFile(files[i].getAbsolutePath());
+                if (!flag)
+                    break;
+            }
+            // 删除子目录
+            else if (files[i].isDirectory()) {
+                flag = deleteDirectory(files[i]
+                        .getAbsolutePath());
+                if (!flag)
+                    break;
+            }
+        }
+        if (!flag) {
+            System.out.println("删除目录失败！");
+            return false;
+        }
+        // 删除当前目录
+        if (dirFile.delete()) {
+            System.out.println("删除目录" + dir + "成功！");
+            return true;
+        } else {
+            return false;
+        }
+    }
+    public  boolean delFile(String path) {
+        if (path != null) {
+            File file = new File(path);
+            if (file.exists()) {
+                if (file.delete())
+                {
+                    return true;
+                }
+                else
+                {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+	
 }

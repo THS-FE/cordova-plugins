@@ -1,7 +1,6 @@
 package cn.com.ths.exportdoc.thsexportdoc.service;
 
 import android.content.Context;
-import android.os.Environment;
 import android.util.Log;
 
 import com.aspose.words.Body;
@@ -15,6 +14,7 @@ import com.aspose.words.Font;
 import com.aspose.words.FormField;
 import com.aspose.words.IReplacingCallback;
 import com.aspose.words.ImportFormatMode;
+import com.aspose.words.License;
 import com.aspose.words.Node;
 import com.aspose.words.NodeCollection;
 import com.aspose.words.NodeImporter;
@@ -32,6 +32,7 @@ import com.aspose.words.Shape;
 import com.aspose.words.Style;
 import com.aspose.words.Table;
 import com.aspose.words.WrapType;
+
 
 import org.apache.cordova.CallbackContext;
 
@@ -54,6 +55,7 @@ import cn.com.ths.exportdoc.thsexportdoc.enums.DocParamTypeEnum;
 import cn.com.ths.exportdoc.thsexportdoc.model.DocParamValue;
 import cn.com.ths.exportdoc.thsexportdoc.utils.StringUtils;
 
+
 public class RepDocTemplate {
 
     private boolean isLicense = false;
@@ -63,9 +65,36 @@ public class RepDocTemplate {
     //用户初始化License
     public RepDocTemplate(Context ctx) {
         this.ctx = ctx;
+        try {
+            InputStream is = ctx.getAssets().open("license.xml");
+            License aposeLic = new License();
+            aposeLic.setLicense(is);
+            isLicense = true;
+        } catch (Exception e) {
+            Log.e("word模板破解失败！", e.getMessage());
+        }
     }
 
-
+    public String cpTemplate(String packName) {
+        String path = "/storage/emulated/0/" + packName;
+        File f = new File(path);
+        if (!f.exists()) {
+            try {
+                f.createNewFile();
+                FileOutputStream out = new FileOutputStream(path);
+                InputStream in = ctx.getAssets().open(packName);
+                byte[] buffer = new byte[1024];
+                int readBytes = 0;
+                while ((readBytes = in.read(buffer)) != -1)
+                    out.write(buffer, 0, readBytes);
+                in.close();
+                out.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        return path;
+    }
 
     /**
      * 根据模板和数据导出word
@@ -82,14 +111,17 @@ public class RepDocTemplate {
                             List<String> bookmarks,
                             String fileName,
                             String templatePath,
-                            boolean isTransToPDF,CallbackContext callbackContext) throws Exception {
+                            boolean isTransToPDF,CallbackContext callbackContext) throws Exception{
         //移动模版文件到指定目录
-        //templatePath = cpTemplate(templatePath);
+//        templatePath = cpTemplate(templatePath);
 
         File checkFile = new File(templatePath);
         if(!checkFile.exists()){
             Log.e("提示","模板文件不存在!");
-            callbackContext.error("模板文件不存在!");
+            return;
+        }
+        if(!isLicense){
+            Log.e("提示","许可证已失效!");
             return;
         }
         System.out.println("Word模板路径:" + templatePath);
@@ -114,7 +146,7 @@ public class RepDocTemplate {
      * @param onlineBrowse 是否在线预览
      * @throws Exception
      */
-    public void exportWord(Document document, String fileName, String suffix, boolean onlineBrowse) throws Exception {
+    public void exportWord(Document document,String fileName,String suffix,boolean onlineBrowse) throws Exception {
         if(document == null) {
             throw new Exception("document is null,导出异常");
         }
@@ -148,7 +180,7 @@ public class RepDocTemplate {
             int len = 0;
             // Environment.getExternalStorageDirectory().getAbsolutePath()+ File.separator + "deviceId/";
 
-            out = new FileOutputStream(new File(getSDPath()+"/"+fileName+"."+extension));
+            out = new FileOutputStream(new File("/storage/emulated/0/screenshot/"+fileName+"."+extension));
             while ((len = inbyte.read(buf)) > 0) {
                 out.write(buf, 0, len);
             }
@@ -181,16 +213,6 @@ public class RepDocTemplate {
             }
         }
     }
-    public String getSDPath(){
-        File sdDir = null;
-        boolean sdCardExist = Environment.getExternalStorageState()
-                .equals(android.os.Environment.MEDIA_MOUNTED);//判断sd卡是否存在
-        if(sdCardExist)
-        {
-            sdDir = Environment.getExternalStorageDirectory();//获取跟目录
-        }
-        return sdDir.toString();
-    }
     /**
      * 处理word模板并将word保存到指定路径
      * @param documentPage 文档体参数对象
@@ -209,7 +231,7 @@ public class RepDocTemplate {
                           String fileName,
                           String templatePath,
                           boolean isTransToPDF,
-                          String destPath) throws Exception {
+                          String destPath) throws Exception{
 
         File checkFile = new File(templatePath);
         if(!checkFile.exists()){
@@ -236,7 +258,7 @@ public class RepDocTemplate {
      * @param destPath word保存的路径（不包含文件名）
      * @throws Exception
      */
-    public void saveWord(Document document, String fileName, String suffix, boolean isTransToPDF, String destPath) throws Exception {
+    public void saveWord(Document document,String fileName,String suffix,boolean isTransToPDF,String destPath) throws Exception {
         //保存修改的内容
         if(isTransToPDF){
             document.save(destPath+"/"+fileName+".pdf", SaveFormat.PDF);
@@ -258,7 +280,7 @@ public class RepDocTemplate {
     public Document writeWordWithTemplete(DocumentPage documentPage,
                                           Map<String,DocDynamicTable> paramDynamicTableMap,
                                           List<String> bookmarks,
-                                          String templatePath) throws Exception {
+                                          String templatePath) throws Exception{
 
         File checkFile = new File(templatePath);
         if(!checkFile.exists()){
@@ -285,7 +307,7 @@ public class RepDocTemplate {
     public Document writeWordWithTemplete(DocumentPage documentPage,
                                           Map<String,DocDynamicTable> paramDynamicTableMap,
                                           List<String> bookmarks,
-                                          Document doc) throws Exception {
+                                          Document doc) throws Exception{
 
         DocumentBuilder builder = new DocumentBuilder(doc);
         //处理动态表的数据
@@ -350,7 +372,7 @@ public class RepDocTemplate {
      * @param dataMap
      * @throws Exception
      */
-    private void replaceDocParam(Document doc, DocumentBuilder builder, Map<String, Object> dataMap) throws Exception {
+    private void replaceDocParam(Document doc,DocumentBuilder builder, Map<String, Object> dataMap) throws Exception{
         //遍历要替换的内容
         if(dataMap!=null){
             Iterator<String> keys = dataMap.keySet().iterator();
@@ -370,7 +392,7 @@ public class RepDocTemplate {
      * @throws Exception
      */
     @SuppressWarnings("rawtypes")
-    private void replaceDynamicTable(Document doc, DocumentBuilder builder, Map<String,DocDynamicTable> tableRowData) throws Exception {
+    private void replaceDynamicTable(Document doc,DocumentBuilder builder, Map<String,DocDynamicTable> tableRowData) throws Exception{
         //替换需要动态行的表格
         NodeCollection tables = doc.getChildNodes(NodeType.TABLE, true);
         for(int i=0;i<tables.getCount();i++){
@@ -444,7 +466,7 @@ public class RepDocTemplate {
      * @throws Exception
      */
     @SuppressWarnings({ "deprecation", "rawtypes" })
-    private void multiTable4Old(Document doc, DocMultiTable multiTable, DocumentBuilder builder) throws Exception {
+    private void multiTable4Old(Document doc,DocMultiTable multiTable,DocumentBuilder builder) throws Exception {
         List<DocDynamicTable.InnerDocTable> docTables=multiTable.getMultiTable();
         Document childDoc=new Document(multiTable.getModelPath());
         //复制子模板，后续每循环一次都要复制一个
@@ -496,7 +518,7 @@ public class RepDocTemplate {
      * @throws Exception
      */
     @SuppressWarnings("rawtypes")
-    private void multiTable4New(Document doc, DocMultiTable multiTable, DocumentBuilder builder) throws Exception {
+    private void multiTable4New(Document doc,DocMultiTable multiTable,DocumentBuilder builder) throws Exception {
         List<DocComplexTable> multiComplexTables = multiTable.getMultiComplexTable();
         Document childDoc=new Document(multiTable.getModelPath());
         //复制子模板，后续每循环一次都要复制一个
@@ -547,7 +569,7 @@ public class RepDocTemplate {
      * @throws Exception
      */
     @SuppressWarnings("rawtypes")
-    private void multiTable4NewDataHandler(Document copyDoc, DocumentBuilder copyBuilder, Map<String, DocTable> innerTableMap) throws Exception {
+    private void multiTable4NewDataHandler(Document copyDoc,DocumentBuilder copyBuilder,Map<String, DocTable> innerTableMap) throws Exception {
         NodeCollection tables = copyDoc.getChildNodes(NodeType.TABLE, true);
         for(int i=0;i<tables.getCount();i++){
             Table currentTable=(Table) tables.get(i);
@@ -588,7 +610,7 @@ public class RepDocTemplate {
      * @param value
      * @throws Exception
      */
-    private void replace(Node node, DocumentBuilder builder, String key, Object value) throws Exception {
+    private void replace(Node node,DocumentBuilder builder, String key,Object value) throws Exception{
         //如果参数值是字符串，则采用字符串的方式进行替换
         if(value instanceof DocParamValue) {
             DocParamValue paramValue = (DocParamValue) value;
@@ -612,7 +634,7 @@ public class RepDocTemplate {
      * @param value
      * @throws Exception
      */
-    private void replaceStrParam(Node node, DocumentBuilder builder, String key, Object value) throws Exception {
+    private void replaceStrParam(Node node,DocumentBuilder builder, String key,Object value) throws Exception{
         String valueStr = String.valueOf(value);
         //对显示值得修改
         if(StringUtils.isNull(valueStr)){
@@ -643,7 +665,7 @@ public class RepDocTemplate {
      * @throws Exception
      */
     @SuppressWarnings({ "unchecked", "rawtypes" })
-    private void replaceClassParam(Node node, String key, DocParamValue paramValue) throws Exception {
+    private void replaceClassParam(Node node,String key,DocParamValue paramValue) throws Exception {
         String className = paramValue.getClassName();
         Object value = paramValue.getValue();
         if(StringUtils.isNull(className)) {
@@ -662,7 +684,7 @@ public class RepDocTemplate {
      * @throws Exception
      */
     @SuppressWarnings({ "unused", "unchecked" })
-    private void replaceTilteParam(Node node, String key, DocParamValue paramValue) throws Exception {
+    private void replaceTilteParam(Node node,String key,DocParamValue paramValue) throws Exception {
         Object value = paramValue.getValue();
         Integer titleLevel = paramValue.getTitleLevel();
         Pattern compile = Pattern.compile("\\$"+key+"\\$");
@@ -689,7 +711,7 @@ public class RepDocTemplate {
      * @throws Exception
      */
     @SuppressWarnings("unused")
-    private int insertRows(DocumentBuilder builder, RowCollection currentRows, DocTable docTable, int currentRowNum) throws Exception {
+    private int insertRows(DocumentBuilder builder,RowCollection currentRows,DocTable docTable,int currentRowNum) throws Exception{
         int pageSize=100;
         //获取动态行信息
         List<Map<String,Object>> rowList=docTable.getRowList();
@@ -786,7 +808,7 @@ public class RepDocTemplate {
             int totalRowSize,
             int startRowNum,
             int curRowNum,
-            int wrapNum) throws Exception {
+            int wrapNum) throws Exception{
 
         for(Map.Entry<String,Object> entry:data.entrySet()){
             this.replace(currentRow,builder, entry.getKey(), entry.getValue());
@@ -838,7 +860,7 @@ public class RepDocTemplate {
      * @param images
      * @throws Exception
      */
-    private void insertImages(DocumentBuilder builder, Map<String,List<DocImage>> images) throws Exception {
+    private void insertImages(DocumentBuilder builder,Map<String,List<DocImage>> images) throws Exception{
 
         for(Map.Entry<String,List<DocImage>> entry:images.entrySet()){
             String bookmark=entry.getKey();
@@ -919,7 +941,7 @@ public class RepDocTemplate {
      * @param objects
      * @throws Exception
      */
-    private void insertOleObjects(DocumentBuilder builder, Map<String,List<DocOleObject>> objects) throws Exception {
+    private void insertOleObjects(DocumentBuilder builder,Map<String,List<DocOleObject>> objects) throws Exception {
         for(Map.Entry<String,List<DocOleObject>> entry:objects.entrySet()){
             String bookmark=entry.getKey();
             boolean isMove = builder.moveToBookmark(bookmark,true,false);
@@ -942,7 +964,7 @@ public class RepDocTemplate {
      * @param targetFont
      * @throws Exception
      */
-    private void copyFont(Map<String,Object> srcFont, Font targetFont) throws Exception {
+    private void copyFont(Map<String,Object> srcFont,Font targetFont) throws Exception{
         if(srcFont.get("AllCaps")!=null){
             targetFont.setAllCaps(Boolean.valueOf(String.valueOf(srcFont.get("allCaps"))));
         }
@@ -1107,7 +1129,7 @@ public class RepDocTemplate {
      * @return
      * @throws Exception
      */
-    public InputStream wordToPdf(String srcPath) throws Exception {
+    public InputStream wordToPdf(String srcPath) throws Exception{
         Document doc=new Document(srcPath);
         return this.wordToPdf(doc);
     }
@@ -1117,7 +1139,7 @@ public class RepDocTemplate {
      * @param srcPath 原始文件地址
      * @param destPath 目标地址
      */
-    public void wordToPdf(String srcPath, String destPath) {
+    public void wordToPdf(String srcPath,String destPath) {
         try {
             Document doc=new Document(srcPath);
             doc.save(destPath, SaveFormat.PDF);
@@ -1133,7 +1155,7 @@ public class RepDocTemplate {
      * @return
      * @throws Exception
      */
-    public InputStream wordToPdf(InputStream pdfIn) throws Exception {
+    public InputStream wordToPdf(InputStream pdfIn) throws Exception{
         Document doc=new Document(pdfIn);
         return this.wordToPdf(doc);
     }
@@ -1142,7 +1164,7 @@ public class RepDocTemplate {
      * 将空表格的占位符替换为空
      * @throws Exception
      */
-    private  int replaceNull(DocTable docTable, RowCollection currentRows, int currentRowNum) throws Exception {
+    private  int replaceNull(DocTable docTable,RowCollection  currentRows,int currentRowNum) throws Exception{
         int[] starts = docTable.getDataRowStarts();
         int tempRowNum = 0;
         for(int temp:starts){
@@ -1165,7 +1187,7 @@ public class RepDocTemplate {
  * @author wangjp
  *
  */
-class DocReplaceCallback implements IReplacingCallback {
+class DocReplaceCallback implements IReplacingCallback{
 
     private String value;
     public DocReplaceCallback(String value){
@@ -1198,7 +1220,7 @@ class DocReplaceCallback implements IReplacingCallback {
  * @author wangjp
  *
  */
-class SupAndSubRepCallback implements IReplacingCallback {
+class SupAndSubRepCallback implements IReplacingCallback{
 
     private DocSuperAndSub superAndSub;
     public SupAndSubRepCallback(DocSuperAndSub superAndSub){
@@ -1258,7 +1280,7 @@ class SupAndSubRepCallback implements IReplacingCallback {
      * 处理上下标
      * @throws Exception
      */
-    public Run handler(Paragraph curPara, Run matchRun, Run lastRun) throws Exception {
+    public Run handler(Paragraph curPara,Run matchRun,Run lastRun) throws Exception{
         //处理上标
         if(!StringUtils.isNull(superAndSub.getSuperscript())){
             Run superRun=(Run) matchRun.deepClone(true);
@@ -1285,12 +1307,12 @@ class SupAndSubRepCallback implements IReplacingCallback {
  * @author wangjp
  * @date   2018年11月12日
  */
-class TitleParamCallback implements IReplacingCallback {
+class TitleParamCallback implements IReplacingCallback{
     //标题值
     private Object value;
     //标题级别
     private Integer titleLevel;
-    public TitleParamCallback(Integer titleLevel, Object value) {
+    public TitleParamCallback(Integer titleLevel,Object value) {
         this.value = value;
         //设置标题默认是一级
         if(titleLevel == null) {
@@ -1338,7 +1360,7 @@ class TitleParamCallback implements IReplacingCallback {
      * @param value
      * @throws Exception
      */
-    private void writeTitle(DocumentBuilder builder, int titleLevel, String value) throws Exception {
+    private void writeTitle(DocumentBuilder builder,int titleLevel,String value) throws Exception {
         //计算标题的字体大小，最大值为24，最小值为12
         int maxSize = 24;
         int curFontSize = maxSize-2*(titleLevel-1);

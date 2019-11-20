@@ -55,7 +55,7 @@ public class thsExportDoc extends CordovaPlugin {
     private void exportWord(){
         if(callbackContext!=null&&docData!=null){
             try{
-                ExportWordUtils.getInstance().exportWord(docData,cordova.getActivity(),callbackContext);
+                ExportWordUtils.getInstance().exportWord(docData,cordova.getActivity(),callbackContext,cordova);
             }catch (Exception e){
                 callbackContext.error(e.getMessage());
             }
@@ -64,9 +64,7 @@ public class thsExportDoc extends CordovaPlugin {
     }
     @Override
     public boolean execute(String action, JSONArray args, CallbackContext callbackContext) throws JSONException {
-        if(this.callbackContext==null){
             this.callbackContext=callbackContext;
-        }
         if (action.equals("exportDoc")) {
             docData= args.getString(0);
             promtForExport();
